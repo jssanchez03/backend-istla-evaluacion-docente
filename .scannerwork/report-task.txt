@@ -1,0 +1,6 @@
+projectKey=Backend-ISTLA-2
+serverUrl=http://localhost:9000
+serverVersion=25.7.0.110598
+dashboardUrl=http://localhost:9000/dashboard?id=Backend-ISTLA-2
+ceTaskId=64fe7ec3-c3c8-42f9-9ae8-54d9121c7696
+ceTaskUrl=http://localhost:9000/api/ce/task?id=64fe7ec3-c3c8-42f9-9ae8-54d9121c7696

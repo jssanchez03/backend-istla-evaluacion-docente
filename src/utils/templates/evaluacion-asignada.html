@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Evaluación Asignada</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 40px;">
+    <div
+        style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="cid:logo_istla" alt="Logo ISTLA" style="max-height: 80px; max-width: 100%; width: auto; height: auto; display: block; margin: 0 auto; background: #fff; border-radius: 8px; padding: 4px;">
+        </div>
+        <h2 style="color: #333;">📋 ¡Tienes una evaluación asignada!</h2>
+        <p>Hola <strong>${NOMBRE}</strong>,</p>
+        <p>Se te ha asignado una <strong>${TIPO_EVALUACION}</strong> correspondiente al periodo
+            <strong>${PERIODO}</strong>.
+        </p>
+        <!-- MENSAJE_ESPECIAL debe contener el texto personalizado de 'Acción requerida' según el tipo de usuario -->
+        ${MENSAJE_ESPECIAL}
+        <p>Por favor, ingresa al sistema con tus credenciales y completa la evaluación antes de la finalización del periodo.</p>
+        <div style="text-align:center; margin: 22px 0;">
+            <a href="${SITIO_URL}"
+               style="display:inline-block;background:#189cbf;color:#fff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:bold;"
+               target="_blank" rel="noopener">
+                Acceder al Sistema
+            </a>
+            <div style="margin-top:8px;font-size:12px;color:#666;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador: <br>
+                <span style="word-break:break-all;">${SITIO_URL}</span>
+            </div>
+        </div>
+        <!-- Solo para estudiantes/docentes -->
+        ${CONDICIONAL_CONTACTO}
+        <p style="margin-top: 40px;">Saludos cordiales,<br><strong>ISTLA</strong></p>
+    </div>
+    <div style="max-width: 600px; margin: 20px auto 0 auto; text-align: center; color: #888; font-size: 12px;">
+        © ${ANIO} Instituto Superior Tecnológico Los Andes (ISTLA). Todos los derechos reservados.
+    </div>
+</body>
+
+</html>
