@@ -8,20 +8,24 @@ const path = require('path');
 const fs = require('fs');
 
 class ReporteCoevaluacionService {
-    // 🔄 MODIFICADO: Obtener datos filtrados por carrera del coordinador
+    // 🔄 MODIFICADO: Obtener datos filtrados por TODAS las carreras del coordinador (multi-carrera)
     async obtenerDatosParaReporte(idPeriodo, cedulaCoordinador) {
         try {
-            // Obtener carrera del coordinador
-            const coordinadorData = await reporteCoevaluacionRepository.obtenerCarreraCoordinador(cedulaCoordinador);
-            const idCarrera = coordinadorData ? coordinadorData.id_carrera : null;
-            // Obtener datos filtrados por carrera
-            const asignaciones = await reporteCoevaluacionRepository.obtenerAsignacionesParaReporte(idPeriodo, idCarrera);
+            // Obtener TODAS las carreras activas del coordinador
+            const carrerasCoord = await reporteCoevaluacionRepository.obtenerCarrerasCoordinador(cedulaCoordinador);
+            const carreraIds = Array.isArray(carrerasCoord) && carrerasCoord.length > 0
+                ? carrerasCoord.map(c => c.id_carrera)
+                : null;
+
+            // Obtener datos filtrados por union de carreras (si existen)
+            const asignaciones = await reporteCoevaluacionRepository.obtenerAsignacionesParaReporte(idPeriodo, carreraIds);
             if (asignaciones.length === 0) {
                 return [];
             }
             // Obtener carreras y niveles para todas las asignaturas
             const asignaturaIds = [...new Set(asignaciones.map(a => a.id_asignatura))].filter(Boolean);
-            const { carreras, niveles } = await reporteCoevaluacionRepository.obtenerCarrerasYNivelesPorAsignaturas(asignaturaIds, idCarrera);
+            // Para enriquecimiento, no filtramos por una sola carrera cuando el coordinador tiene múltiples
+            const { carreras, niveles } = await reporteCoevaluacionRepository.obtenerCarrerasYNivelesPorAsignaturas(asignaturaIds, null);
             // Enriquecer datos con carrera y nivel
             const asignacionesEnriquecidas = asignaciones.map(asig => ({
                 ...asig,
@@ -35,15 +39,18 @@ class ReporteCoevaluacionService {
         }
     }
 
-    // 🔄 MODIFICADO: Generar reporte filtrado por carrera del coordinador
+    // 🔄 MODIFICADO: Generar reporte filtrado por TODAS las carreras del coordinador
     async generarReportePDF(idPeriodo, cedulaCoordinador, usuarioId) {
         try {
-            // Obtener carrera del coordinador
-            const coordinadorData = await reporteCoevaluacionRepository.obtenerCarreraCoordinador(cedulaCoordinador);
-            const idCarrera = coordinadorData ? coordinadorData.id_carrera : null;
+            // Obtener TODAS las carreras activas del coordinador
+            const carrerasCoord = await reporteCoevaluacionRepository.obtenerCarrerasCoordinador(cedulaCoordinador);
+            const carreraIds = Array.isArray(carrerasCoord) && carrerasCoord.length > 0
+                ? carrerasCoord.map(c => c.id_carrera)
+                : null;
+
             // Obtener datos filtrados y autoridades para firmas
             const [asignaciones, periodo, autoridades] = await Promise.all([
-                reporteCoevaluacionRepository.obtenerAsignacionesParaReporte(idPeriodo, idCarrera),
+                reporteCoevaluacionRepository.obtenerAsignacionesParaReporte(idPeriodo, carreraIds),
                 reporteCoevaluacionRepository.obtenerPeriodo(idPeriodo),
                 autoridadesRepository.obtenerAutoridadesParaFirmas(usuarioId)
             ]);
@@ -52,7 +59,7 @@ class ReporteCoevaluacionService {
             }
             // Obtener carreras y niveles para todas las asignaturas
             const asignaturaIds = [...new Set(asignaciones.map(a => a.id_asignatura))].filter(Boolean);
-            const { carreras, niveles } = await reporteCoevaluacionRepository.obtenerCarrerasYNivelesPorAsignaturas(asignaturaIds, idCarrera);
+            const { carreras, niveles } = await reporteCoevaluacionRepository.obtenerCarrerasYNivelesPorAsignaturas(asignaturaIds, null);
             // Enriquecer datos con carrera y nivel
             const asignacionesEnriquecidas = asignaciones.map(asig => ({
                 ...asig,

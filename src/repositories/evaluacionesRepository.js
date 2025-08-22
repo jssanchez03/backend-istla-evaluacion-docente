@@ -155,10 +155,10 @@ async function registrarEvaluacionRealizada({ idEvaluacion, evaluadorId, evaluad
     `, [idEvaluacion, evaluadorId, evaluadoId, idDistributivo]);
 }
 
-// Marcar evaluación como completada
+// Marcar evaluación como completada (solo cambia estado, NO fecha_fin)
 async function finalizarEvaluacion(idEvaluacion) {
     await dbEscritura.query(
-        'UPDATE evaluaciones SET estado = "completada", fecha_fin = NOW() WHERE id_evaluacion = ?',
+        'UPDATE evaluaciones SET estado = "completada" WHERE id_evaluacion = ?',
         [idEvaluacion]
     );
 }
@@ -653,7 +653,7 @@ async function obtenerTodasEvaluacionesDelUsuario(idEstudiante) {
         e.id_formulario,
         e.estado,
         e.fecha_inicio,
-        e.fecha_fin,
+        e.fecha_fin AS fecha_limite,
         e.fecha_notificacion,
         e.id_periodo,
         f.nombre AS nombre_formulario,
@@ -741,6 +741,7 @@ async function obtenerEvaluacionesEstudiantePorId(idEstudiante) {
                 e.estado,
                 e.fecha_inicio,
                 e.fecha_fin,
+                e.fecha_fin AS fecha_limite,
                 f.nombre AS nombre_formulario
             FROM evaluaciones e
             JOIN formularios f ON f.id_formulario = e.id_formulario
@@ -772,6 +773,7 @@ async function obtenerEvaluacionesEstudiantePorId(idEstudiante) {
                     id_distributivo: docente.id_distributivo,
                     fecha_inicio: evaluacion.fecha_inicio,
                     fecha_fin: evaluacion.fecha_fin,
+                    fecha_limite: evaluacion.fecha_limite,
                     nombres_docente: docente.nombres_docente,
                     nombre_asignatura: docente.nombre_asignatura,
                     nombre_formulario: evaluacion.nombre_formulario
@@ -806,6 +808,7 @@ async function obtenerEvaluacionesEstudiantePorId(idEstudiante) {
                     estado_estudiante: respuestasMap.get(key) > 0 ? "completada" : "pendiente",
                     fecha_inicio: c.fecha_inicio,
                     fecha_fin: c.fecha_fin || null,
+                    fecha_limite: c.fecha_limite || null,
                     nombre_formulario: c.nombre_formulario
                 });
             }
@@ -850,7 +853,7 @@ async function obtenerEvaluacionesDocentePorId(idDocente, idUsuario) {
     if (tieneDistributivo > 0) {
         const [autoevals] = await dbEscritura.query(`
             SELECT 
-                e.id_evaluacion, e.id_formulario, e.fecha_inicio, e.fecha_fin,
+                e.id_evaluacion, e.id_formulario, e.fecha_inicio, e.fecha_fin AS fecha_limite,
                 f.nombre AS nombre_formulario
             FROM evaluaciones e
             JOIN formularios f ON f.id_formulario = e.id_formulario
@@ -893,7 +896,7 @@ async function obtenerEvaluacionesDocentePorId(idDocente, idUsuario) {
     // 🔧 COEVALUACIÓN CORREGIDA - Solo asignaturas específicamente asignadas
     const [coevaluaciones] = await dbEscritura.query(`
         SELECT 
-            e.id_evaluacion, e.id_formulario, e.fecha_inicio, e.fecha_fin,
+            e.id_evaluacion, e.id_formulario, e.fecha_inicio, e.fecha_fin, e.fecha_fin AS fecha_limite,
             f.nombre AS nombre_formulario
         FROM evaluaciones e
         JOIN formularios f ON f.id_formulario = e.id_formulario

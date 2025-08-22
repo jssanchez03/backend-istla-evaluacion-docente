@@ -55,6 +55,12 @@ async function crearAsignacion(req, res) {
         console.error('Error al crear asignación:', error);                
         
         // Manejo de errores específicos
+        if (error.message.includes('No se puede crear una asignación con una fecha anterior')) {
+            return res.status(400).json({ 
+                error: error.message 
+            });
+        }
+        
         if (error.message.includes('Ya existe una asignación entre estos docentes para esta asignatura')) {
             return res.status(409).json({ 
                 error: 'Ya existe una asignación entre estos docentes para esta asignatura en este período. Selecciona una asignatura diferente.' 

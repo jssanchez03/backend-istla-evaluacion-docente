@@ -232,17 +232,24 @@ async function obtenerDocentesConMateriasPorPeriodo(idPeriodo) {
             ) AS nombre,
             nd.ID_DISTRIBUTIVO as id_distributivo,
             na.ID_ASIGNATURA as id_asignatura,
-            na.NOMBRE_ASIGNATURA as nombre_asignatura
+            na.NOMBRE_ASIGNATURA as nombre_asignatura,
+            mc.ID_CARRERAS as id_carrera,
+            mc.NOMBRE_CARRERAS as nombre_carrera,
+            mcur.ID_CURSOS as id_curso,
+            mcur.NOMBRE_CURSOS as nombre_curso
         FROM HORARIOS_DOCENTE hd
         INNER JOIN NOTAS_DISTRIBUTIVO nd ON hd.ID_DOCENTE = nd.ID_DOCENTE_DISTRIBUTIVO
         LEFT JOIN NOTAS_ASIGNATURA na ON nd.ID_ASIGNATURA_DISTRIBUTIVO = na.ID_ASIGNATURA
+        LEFT JOIN MATRICULACION_FORMAR_CURSOS mfc ON nd.ID_FORMAR_CURSOS_DISTRIBUTIVO = mfc.ID_FORMAR_CURSOS
+        LEFT JOIN MATRICULACION_CARRERAS mc ON mfc.ID_CARRERA_FORMAR_CURSOS = mc.ID_CARRERAS
+        LEFT JOIN MATRICULACION_CURSOS mcur ON mfc.ID_CURSOS_FORMAR_CURSOS = mcur.ID_CURSOS
         WHERE nd.ID_PERIODO_DISTRIBUTIVO = ?
             AND nd.DELETED_AT_DISTRIBUTIVO IS NULL
             AND hd.NOMBRES_1_DOCENTE IS NOT NULL 
             AND hd.APELLIDOS_1_DOCENTE IS NOT NULL
             AND TRIM(CONCAT(COALESCE(hd.NOMBRES_1_DOCENTE, ''), ' ', COALESCE(hd.APELLIDOS_1_DOCENTE, ''))) <> ''
             AND CONCAT(COALESCE(hd.NOMBRES_1_DOCENTE, ''), ' ', COALESCE(hd.APELLIDOS_1_DOCENTE, '')) NOT LIKE '%@%'
-        ORDER BY nombre ASC, nombre_asignatura ASC
+        ORDER BY nombre ASC, nombre_asignatura ASC, nombre_carrera ASC, nombre_curso ASC
     `, [idPeriodo]);
     return rows;
 }

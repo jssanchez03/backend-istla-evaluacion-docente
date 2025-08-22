@@ -15,6 +15,7 @@ const autoridadesRoutes = require('./autoridadesRoutes');
 const evaluacionAutoridadesRoutes = require('./evaluacionAutoridadesRoutes');
 const reporteCarreraRoutes = require('./reporteCarreraRoutes');
 const reportesCalificacionCarreraRoutes = require('./reportesCalificacionCarreraRoutes');
+const reporteDocenteIndividualRoutes = require('./reporteDocenteIndividualRoutes');
 
 router.use('/v1', authRoutes);
 router.use('/v1', protectedRoutes); 
@@ -30,5 +31,6 @@ router.use('/v1', autoridadesRoutes);
 router.use('/v1', evaluacionAutoridadesRoutes);
 router.use('/v1', reporteCarreraRoutes);
 router.use('/v1', reportesCalificacionCarreraRoutes);
+router.use('/v1', reporteDocenteIndividualRoutes);
 
 module.exports = router;

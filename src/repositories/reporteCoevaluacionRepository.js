@@ -18,6 +18,19 @@ class ReporteCoevaluacionRepository {
         return rows[0] || null;
     }
 
+    // 🆕 NUEVO: Obtener TODAS las carreras activas del coordinador (para multi-carrera)
+    async obtenerCarrerasCoordinador(cedulaCoordinador) {
+        const [rows] = await dbEscritura.query(`
+            SELECT 
+                cc.id_carrera,
+                cc.cedula_coordinador
+            FROM coordinadores_carreras cc
+            WHERE cc.cedula_coordinador = ? 
+              AND cc.estado = 'ACTIVO'
+        `, [cedulaCoordinador]);
+        return rows || [];
+    }
+
     // 🔄 MODIFICADO: Función auxiliar para obtener el orden numérico de los semestres
     obtenerOrdenSemestre(nombreSemestre) {
         const nombreLower = nombreSemestre.toLowerCase();
@@ -49,17 +62,20 @@ class ReporteCoevaluacionRepository {
 
         let params = [idPeriodo];
 
-        // Si se proporciona idCarrera, filtrar por carrera usando BD INSTITUTO (mayúsculas)
+        // Si se proporciona idCarrera (número) o arreglo de idCarrera, filtrar por carrera(s) usando BD INSTITUTO (mayúsculas)
         if (idCarrera) {
-            // Primero obtenemos las asignaturas de la carrera desde BD INSTITUTO
+            const carreraIds = Array.isArray(idCarrera) ? idCarrera : [idCarrera];
+
+            // Obtener asignaturas para TODAS las carreras indicadas
+            const placeholders = carreraIds.map(() => '?').join(',');
             const [asignaturasCarrera] = await dbLectura.query(`
                 SELECT DISTINCT na.ID_ASIGNATURA
                 FROM NOTAS_ASIGNATURA na
                 JOIN NOTAS_DISTRIBUTIVO nd ON na.ID_ASIGNATURA = nd.ID_ASIGNATURA_DISTRIBUTIVO
                 JOIN MATRICULACION_FORMAR_CURSOS mfc ON nd.ID_FORMAR_CURSOS_DISTRIBUTIVO = mfc.ID_FORMAR_CURSOS
-                WHERE mfc.ID_CARRERA_FORMAR_CURSOS = ?
-                AND nd.DELETED_AT_DISTRIBUTIVO IS NULL
-            `, [idCarrera]);
+                WHERE mfc.ID_CARRERA_FORMAR_CURSOS IN (${placeholders})
+                  AND nd.DELETED_AT_DISTRIBUTIVO IS NULL
+            `, carreraIds);
 
             if (asignaturasCarrera.length === 0) {
                 return [];

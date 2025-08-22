@@ -220,7 +220,11 @@ async function obtenerDocentesConMateriasPorPeriodo(idPeriodo) {
                 docentesAgrupados[d.id_docente].materias.push({
                     id_distributivo: d.id_distributivo,
                     id_asignatura: d.id_asignatura,
-                    nombre_asignatura: d.nombre_asignatura || 'Materia sin nombre'
+                    nombre_asignatura: d.nombre_asignatura || 'Materia sin nombre',
+                    id_carrera: d.id_carrera,
+                    nombre_carrera: d.nombre_carrera,
+                    id_curso: d.id_curso,
+                    nombre_curso: d.nombre_curso
                 });
             }
         });

@@ -149,6 +149,8 @@ async function generarDocumentoWord(datos, numeroInicioOficio) {
                 co_ponderada: docente.evaluaciones.co_ponderada.toFixed(2),
                 autoridades_ponderada: docente.evaluaciones.autoridades_ponderada.toFixed(2),
                 total_ponderado: docente.evaluaciones.total_ponderado.toFixed(2),
+                // Observaciones individuales del docente
+                observaciones: docente.evaluaciones.observaciones_autoridades || 'Sin observaciones',
                 // Generar número de oficio secuencial
                 numero_oficio: `ISTLA-VR-${añoActual}-${numeroInicioOficio + index}-O`
             }))

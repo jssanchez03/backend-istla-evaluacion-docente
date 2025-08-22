@@ -60,6 +60,7 @@ class ReporteCarreraService {
                     const heteroevaluacion = this.validarNumero(evaluaciones.heteroevaluacion);
                     const coevaluacion = this.validarNumero(evaluaciones.coevaluacion);
                     const evaluacionAutoridades = this.validarNumero(evaluaciones.evaluacion_autoridades);
+                    const observacionesAutoridades = evaluaciones.observaciones_autoridades || '';
                     // Aplicar ponderaciones: Auto 10%, Hetero 40%, Co 30%, Autoridades 20%
                     const autoPonderada = (autoevaluacion * 0.10);
                     const heteroPonderada = (heteroevaluacion * 0.40);
@@ -77,7 +78,8 @@ class ReporteCarreraService {
                             hetero_ponderada: parseFloat(heteroPonderada.toFixed(2)),
                             co_ponderada: parseFloat(coPonderada.toFixed(2)),
                             autoridades_ponderada: parseFloat(autoridadesPonderada.toFixed(2)),
-                            total_ponderado: parseFloat(totalPonderado.toFixed(2))
+                            total_ponderado: parseFloat(totalPonderado.toFixed(2)),
+                            observaciones_autoridades: observacionesAutoridades
                         }
                     });
                 } catch (error) {
@@ -94,7 +96,8 @@ class ReporteCarreraService {
                             hetero_ponderada: 0,
                             co_ponderada: 0,
                             autoridades_ponderada: 0,
-                            total_ponderado: 0
+                            total_ponderado: 0,
+                            observaciones_autoridades: ''
                         }
                     });
                 }

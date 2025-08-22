@@ -99,54 +99,86 @@ class ReporteCarreraRepository {
     // Obtener evaluaciones de un docente específico
     async obtenerEvaluacionesDocente(idDistributivo, idDocenteDistributivo, idPeriodo) {
         try {
-            // Obtener promedio de autoevaluación (formulario 1)
-            const [autoeval] = await dbEscritura.query(`
-            SELECT AVG(CAST(r.respuesta AS DECIMAL)) * 20 AS promedio
-            FROM respuestas r
-            INNER JOIN evaluaciones_realizadas er ON r.id_evaluacion = er.id_evaluacion
-            INNER JOIN evaluaciones e ON er.id_evaluacion = e.id_evaluacion
-            WHERE e.id_periodo = ?
-                AND e.id_formulario = 1
-                AND r.id_distributivo = ?
-                AND r.id_pregunta IN (
-                    SELECT id_pregunta FROM preguntas
-                )
-                AND er.estado = 'completada'
-        `, [idPeriodo, idDistributivo]);
+            // Obtener todos los distributivos del docente en el período para autoevaluación
+            const [distRows] = await dbLectura.query(`
+                SELECT ID_DISTRIBUTIVO
+                FROM NOTAS_DISTRIBUTIVO
+                WHERE ID_DOCENTE_DISTRIBUTIVO = ?
+                  AND ID_PERIODO_DISTRIBUTIVO = ?
+                  AND DELETED_AT_DISTRIBUTIVO IS NULL
+            `, [idDocenteDistributivo, idPeriodo]);
 
-            // Obtener promedio de heteroevaluación (formulario 2)
-            const [heteroeval] = await dbEscritura.query(`
-            SELECT AVG(CAST(r.respuesta AS DECIMAL)) * 20 AS promedio
-            FROM respuestas r
-            INNER JOIN evaluaciones_realizadas er ON r.id_evaluacion = er.id_evaluacion
-            INNER JOIN evaluaciones e ON er.id_evaluacion = e.id_evaluacion
-            WHERE e.id_periodo = ?
-                AND e.id_formulario = 2
-                AND r.id_distributivo = ?
-                AND r.id_pregunta IN (
-                    SELECT id_pregunta FROM preguntas
-                )
-                AND er.estado = 'completada'
-        `, [idPeriodo, idDistributivo]);
+            let autoevalPromedio = 0;
+            if (distRows.length > 0) {
+                const distIds = distRows.map(r => r.ID_DISTRIBUTIVO);
+                const placeholders = distIds.map(() => '?').join(',');
 
-            // Obtener promedio de coevaluación (formulario 3)
-            const [coeval] = await dbEscritura.query(`
-            SELECT AVG(CAST(r.respuesta AS DECIMAL)) * 20 AS promedio
-            FROM respuestas r
-            INNER JOIN evaluaciones_realizadas er ON r.id_evaluacion = er.id_evaluacion
-            INNER JOIN evaluaciones e ON er.id_evaluacion = e.id_evaluacion
-            WHERE e.id_periodo = ?
-                AND e.id_formulario = 3
-                AND r.id_distributivo = ?
-                AND r.id_pregunta IN (
-                    SELECT id_pregunta FROM preguntas
-                )
-                AND er.estado = 'completada'
-        `, [idPeriodo, idDistributivo]);
+                // Obtener promedio de autoevaluación (formulario 1) agregando por todos los distributivos del docente
+                const [autoeval] = await dbEscritura.query(`
+                    SELECT AVG(CAST(r.respuesta AS DECIMAL)) * 20 AS promedio
+                    FROM respuestas r
+                    INNER JOIN evaluaciones_realizadas er ON r.id_evaluacion = er.id_evaluacion
+                    INNER JOIN evaluaciones e ON er.id_evaluacion = e.id_evaluacion
+                    WHERE e.id_periodo = ?
+                        AND e.id_formulario = 1
+                        AND r.id_distributivo IN (${placeholders})
+                        AND r.id_pregunta IN (
+                            SELECT id_pregunta FROM preguntas
+                        )
+                        AND er.estado = 'completada'
+                `, [idPeriodo, ...distIds]);
+                autoevalPromedio = autoeval[0]?.promedio || 0;
+            }
 
-            // Obtener promedio de evaluación de autoridades
+            // Obtener promedio de heteroevaluación (formulario 2) usando todos los distributivos
+            let heteroevalPromedio = 0;
+            if (distRows.length > 0) {
+                const distIds = distRows.map(r => r.ID_DISTRIBUTIVO);
+                const placeholders = distIds.map(() => '?').join(',');
+                
+                const [heteroeval] = await dbEscritura.query(`
+                    SELECT AVG(CAST(r.respuesta AS DECIMAL)) * 20 AS promedio
+                    FROM respuestas r
+                    INNER JOIN evaluaciones_realizadas er ON r.id_evaluacion = er.id_evaluacion
+                    INNER JOIN evaluaciones e ON er.id_evaluacion = e.id_evaluacion
+                    WHERE e.id_periodo = ?
+                        AND e.id_formulario = 2
+                        AND r.id_distributivo IN (${placeholders})
+                        AND r.id_pregunta IN (
+                            SELECT id_pregunta FROM preguntas
+                        )
+                        AND er.estado = 'completada'
+                `, [idPeriodo, ...distIds]);
+                heteroevalPromedio = heteroeval[0]?.promedio || 0;
+            }
+
+            // Obtener promedio de coevaluación (formulario 3) usando todos los distributivos
+            let coevalPromedio = 0;
+            if (distRows.length > 0) {
+                const distIds = distRows.map(r => r.ID_DISTRIBUTIVO);
+                const placeholders = distIds.map(() => '?').join(',');
+                
+                const [coeval] = await dbEscritura.query(`
+                    SELECT AVG(CAST(r.respuesta AS DECIMAL)) * 20 AS promedio
+                    FROM respuestas r
+                    INNER JOIN evaluaciones_realizadas er ON r.id_evaluacion = er.id_evaluacion
+                    INNER JOIN evaluaciones e ON er.id_evaluacion = e.id_evaluacion
+                    WHERE e.id_periodo = ?
+                        AND e.id_formulario = 3
+                        AND r.id_distributivo IN (${placeholders})
+                        AND r.id_pregunta IN (
+                            SELECT id_pregunta FROM preguntas
+                        )
+                        AND er.estado = 'completada'
+                `, [idPeriodo, ...distIds]);
+                coevalPromedio = coeval[0]?.promedio || 0;
+            }
+
+            // Obtener promedio de evaluación de autoridades y observaciones
             const [evalAutoridades] = await dbEscritura.query(`
-            SELECT AVG(ea.calificacion) AS promedio
+            SELECT 
+                AVG(ea.calificacion) AS promedio,
+                GROUP_CONCAT(COALESCE(NULLIF(TRIM(ea.observaciones), ''), NULL) SEPARATOR '; ') AS observaciones
             FROM evaluaciones_autoridades ea
             WHERE ea.id_periodo = ?
                 AND ea.id_docente_evaluado = ?
@@ -154,10 +186,11 @@ class ReporteCarreraRepository {
         `, [idPeriodo, idDocenteDistributivo]);
 
             return {
-                autoevaluacion: autoeval[0]?.promedio || null,
-                heteroevaluacion: heteroeval[0]?.promedio || null,
-                coevaluacion: coeval[0]?.promedio || null,
-                evaluacion_autoridades: evalAutoridades[0]?.promedio || null
+                autoevaluacion: autoevalPromedio,
+                heteroevaluacion: heteroevalPromedio,
+                coevaluacion: coevalPromedio,
+                evaluacion_autoridades: evalAutoridades[0]?.promedio || null,
+                observaciones_autoridades: evalAutoridades[0]?.observaciones || null
             };
         } catch (error) {
             console.error('Error en obtenerEvaluacionesDocente:', error);

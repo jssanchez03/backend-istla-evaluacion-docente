@@ -55,7 +55,7 @@ async function crearEvaluacion(usuario, data) {
             id_formulario: data.id_formulario,
             id_periodo: data.id_periodo,
             fecha_inicio: data.fecha_inicio || new Date(),
-            fecha_fin: null,
+            fecha_fin: data.fecha_fin || null,
             estado: 'pendiente',
             fecha_notificacion: data.fecha_notificacion || null
         };
