@@ -425,7 +425,7 @@ class ReporteDocenteIndividualService {
                 });
         } else {
             doc.fontSize(9).font('Helvetica-Oblique')
-                .text('Bien, buen desempeños', 55, yPosition + 18, {
+                .text('Sin observaciones', 55, yPosition + 18, {
                     width: cuadroWidth - 10,
                     align: 'left'
                 });
